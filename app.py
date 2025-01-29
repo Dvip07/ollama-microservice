@@ -5,13 +5,12 @@ app = Flask(__name__)
 
 @app.route('/llm', methods=['POST'])
 def query_llm():
-    # Get input text from the request
     input_text = request.json.get('text', '')
 
-    # Run the Ollama model with the input text
     try:
+        # Use 'llama3.2' instead of 'llama'
         result = subprocess.run(
-            ['ollama', 'run', 'llama'],
+            ['ollama', 'run', 'llama3.2'],
             input=input_text,
             text=True,
             capture_output=True
@@ -22,4 +21,4 @@ def query_llm():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(port=5001)
