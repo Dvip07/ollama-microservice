@@ -6,9 +6,8 @@ app = Flask(__name__)
 @app.route('/llm', methods=['POST'])
 def query_llm():
     input_text = request.json.get('text', '')
-
+    
     try:
-        # Use 'llama3.2' instead of 'llama'
         result = subprocess.run(
             ['ollama', 'run', 'llama3.2'],
             input=input_text,
