@@ -37,6 +37,28 @@ def register_service():
 
     return jsonify({"error": "Invalid request"}), 400
 
+
+@app.route('/receive-message', methods=['GET'])
+def reply_to_service_a():
+    # Call local Ollama to generate response
+    ollama_response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={"model": "llama3", "prompt": "Hello from Service B!"}
+    )
+    
+    # Optionally, Service B can reply explicitly to A
+    try:
+        response_to_a = requests.get('http://192.168.2.117:5000/receive-message')
+        reply_from_a = response_to_a.json()
+    except requests.exceptions.RequestException as e:
+        reply_from_a = {"error": str(e)}
+
+    return jsonify({
+        "message": "Hi, I am Service B! I received your request.",
+        "ollama_reply": ollama_response.json(),
+        "reply_from_service_a": reply_from_a
+    })
+
 @app.route('/services', methods=['GET'])
 def list_services():
     """Return the list of active services."""
