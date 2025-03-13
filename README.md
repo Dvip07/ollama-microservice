@@ -79,6 +79,7 @@ cd frontend
 npm start
 ```
 
+
 ---
 
 ## 🔥 **How It Works**
@@ -123,16 +124,12 @@ If the frontend can't communicate with Flask:
 
 ---
 
-## 🎯 **Next Steps**
-✅ Add authentication for secure communication.  
-✅ Improve logging with timestamps & JSON formatting.  
-✅ Deploy services using **Docker & Kubernetes**.  
+### **BROWSER URL TO ACCESS THE APPLICATIONS**
+192.168.2.117:3000 - react port
+192.168.2.117:5001 - service b - windows 
+192.168.2.153:5002- service a - Mac
 
----
 
-## 🤝 **Contributors**
-- **Your Name** (Lead Developer)
-- **Your Team Members**
 
 📌 **Questions?** Reach out via [GitHub Issues](#) 🚀
 
