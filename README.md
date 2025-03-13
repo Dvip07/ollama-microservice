@@ -1,126 +1,141 @@
-# ollama-microservice
-
-# Ollama Microservices Communication
-
-This project sets up multiple microservices running Ollama LLM (`llama3.2`) that can communicate with each other. The microservices register with a **Service Registrar**, send messages to each other, and return AI-generated responses. A **React frontend** displays the conversations in real-time.
-
-## 🚀 Features
-- **Multiple Microservices**: Each service runs Ollama LLM (`llama3.2`).
-- **Dynamic Registration**: Services register with the **Service Registrar**.
-- **LLM-based Chat**: Services exchange messages and respond using AI.
-- **Real-time UI Updates**: Messages are displayed in a **React** frontend.
+Here is the updated `README.md` file for your **Microservice Communication System**. It includes **setup instructions, usage, and troubleshooting** steps.
 
 ---
 
-## 📌 Requirements
-These are the Requirements to run this project on your system
+## 📌 **Microservice Communication System**
+A system where **multiple microservices** communicate with each other using **Flask (Python) APIs, WebSockets, and React (Frontend).**  
+Each service registers itself in a **Service Registry**, can send messages to other registered services, and process responses using **Ollama AI (LLM Model).**  
 
-- **Python 3**
-- **Flask & Flask-SocketIO**
-- **Ollama CLI** ([Install Ollama](https://ollama.ai))
-- **Node.js & npm** (for React frontend)
+---
 
-### 📦 Install Dependencies
-Run the following commands to install dependencies:
-
-```sh
-pip install flask flask-socketio flask-cors requests eventlet
+## 📂 **Project Structure**
+```
+/microservices-project
+│── /frontend                # React frontend (Service B UI)
+│── /backend-service-a       # Flask API for Service A
+│── /backend-service-b       # Flask API for Service B
+│── /service-registry        # Flask-based service registry
+│── README.md                # Documentation
 ```
 
 ---
 
-## 🏗️ Setup and Run
-### **1️⃣ Start the Service Registrar**
-The **Service Registrar** manages microservices and message forwarding.
-
-```sh
-python registrar.py
-```
-
-### **2️⃣ Start Multiple Microservices**
-Each service runs an **Ollama LLM instance** and can communicate with other services.
-
-```sh
-python app.py 5001  # Start first service
-python app.py 5002  # Start second service
-```
-
-### **3️⃣ Start React Frontend**
-Navigate to the **React frontend directory** and run:
-
-```sh
-npm install  # Install dependencies
-npm start    # Start the frontend
-```
-
-### **4️⃣ Open the UI**
-Go to: **[http://localhost:3000](http://localhost:3000)**
-
-Send a message using the UI, and watch **Ollama microservices** talk to each other! 🧠💬
+## 🚀 **Features**
+✅ **Service Discovery** - Services register/deregister automatically.  
+✅ **Real-Time Communication** - Uses **WebSockets** for instant message forwarding.  
+✅ **AI-Powered Response** - Microservices use **Ollama** to generate AI-based replies.  
+✅ **Message Routing** - Send messages to **specific services** via the frontend.  
+✅ **Auto-Deregistration** - Services inactive for **5+ minutes** are removed.  
 
 ---
 
-## 📝 How It Works
-### **1. Service Registration**
-Each **microservice (`app.py`) registers itself** with the **Service Registrar (`registrar.py`)**.
+## ⚙️ **Setup Instructions**
 
-### **2. Message Processing**
-- A microservice receives a message from another service.
-- It processes the message using **Ollama LLM (`llama3.2`)**.
-- It responds with the AI-generated reply.
-- The conversation continues between services.
+### 🔹 **1️⃣ Install Dependencies**
+Ensure Python (Flask) & Node.js (React) are installed.
 
-### **3. UI Updates in Real-Time**
-- The **React frontend** fetches **active microservices**.
-- Messages are forwarded through the **Service Registrar**.
-- WebSockets update the conversation in real-time.
-
-### **4. Timeout**
-- If a service failed to send a message every five minutes, it gets deleted from the service registrar.
-
----
-
-## 🔍 API Endpoints
-### **1️⃣ Service Registrar (`registrar.py`)**
-| Method | Endpoint | Description |
-|--------|---------|-------------|
-| `POST` | `/register` | Register a microservice |
-| `GET` | `/services` | Get active services |
-| `POST` | `/forward` | Forward a message to a service |
-
-### **2️⃣ Microservices (`app.py`)**
-| Method | Endpoint | Description |
-|--------|---------|-------------|
-| `POST` | `/receive` | Receive a message and process with Ollama LLM |
-
----
-
-## 🛠️ Troubleshooting
-### **1️⃣ Services Not Registering?**
-Run:
-```sh
-curl http://127.0.0.1:5003/services
-```
-- If `{}` is returned, restart services:
-```sh
-python app.py 5001
-python app.py 5002
+#### 📌 **Backend (Service A & B)**
+```bash
+pip install flask flask-cors requests flask-socketio
 ```
 
-### **2️⃣ Messages Not Forwarding?**
-Test manually:
-```sh
-curl -X POST http://127.0.0.1:5003/forward \  
-    -H "Content-Type: application/json" \  
-    -d '{"from_service": "ollama-service-5001", "to_service": "ollama-service-5002", "message": "Hello"}'
-```
-- Check logs in `registrar.py` and `app.py`
-
-### **3️⃣ UI Not Updating?**
-Check WebSockets in Chrome Console (`F12 → Console`):
-```javascript
-const socket = io("http://127.0.0.1:5003");
-socket.on("message_forwarded", (data) => console.log("WebSocket Message:", data));
+#### 📌 **Frontend**
+```bash
+npm install axios socket.io-client
 ```
 
 ---
+
+### 🔹 **2️⃣ Start Service Registry**
+The **Service Registry** manages active services. Start it first:
+```bash
+cd service-registry
+python service_registry.py
+```
+
+---
+
+### 🔹 **3️⃣ Start Microservices**
+Start **Service A** (Mac/Linux) & **Service B** (Windows):
+
+#### 📌 **Run Service A (Mac/Linux)**
+```bash
+cd backend-service-a
+python service_a.py
+```
+
+#### 📌 **Run Service B (Windows)**
+```bash
+cd backend-service-b
+python service_b.py
+```
+
+---
+
+### 🔹 **4️⃣ Start the Frontend**
+The **React frontend** runs on `localhost:3000`.  
+```bash
+cd frontend
+npm start
+```
+
+---
+
+## 🔥 **How It Works**
+1️⃣ Each microservice **registers with the service registry** when started.  
+2️⃣ Frontend **fetches available services** and shows them in a dropdown.  
+3️⃣ Users **send messages to selected services** from the UI.  
+4️⃣ The **receiver processes the message** using **Ollama AI** and responds.  
+5️⃣ The response **appears in the UI logs in real time** (via WebSockets).  
+
+---
+
+## 🖥 **Frontend Usage**
+📌 **1️⃣ Open `http://localhost:3000` in a browser.**  
+📌 **2️⃣ Select a service from the dropdown.**  
+📌 **3️⃣ Type a message and click "Send Message".**  
+📌 **4️⃣ View the logs as messages are sent/received.**
+
+---
+
+## 🛠 **Troubleshooting**
+### ❌ **CORS Policy Error?**
+If the frontend can't communicate with Flask:
+- Restart Flask servers.
+- Ensure `flask-cors` is installed.
+- Add this to Flask:
+  ```python
+  from flask_cors import CORS
+  CORS(app, resources={r"/*": {"origins": "*"}})
+  ```
+
+### ❌ **WebSocket Not Connecting?**
+- Ensure **Flask WebSockets (`socketio.run(app)`)** is running.
+- Restart the **Service Registry**.
+- Run:
+  ```bash
+  npm install socket.io-client
+  ```
+
+### ❌ **Messages Not Being Forwarded?**
+- Ensure the **correct service IPs are used**.
+- Check Flask logs for **"Failed to reach target service"** errors.
+
+---
+
+## 🎯 **Next Steps**
+✅ Add authentication for secure communication.  
+✅ Improve logging with timestamps & JSON formatting.  
+✅ Deploy services using **Docker & Kubernetes**.  
+
+---
+
+## 🤝 **Contributors**
+- **Your Name** (Lead Developer)
+- **Your Team Members**
+
+📌 **Questions?** Reach out via [GitHub Issues](#) 🚀
+
+---
+
+🚀 **Enjoy building scalable microservices!** 🚀
