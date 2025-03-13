@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
 
-const socket = io("http://127.0.0.1:5003", {
+// Connect to WebSocket (ensure backend WebSocket is running)
+const socket = io("http://192.168.2.117:5001", {  // Service B WebSocket URL
   transports: ["websocket", "polling"],
   reconnectionAttempts: 5,
   timeout: 20000,
@@ -12,60 +13,74 @@ function App() {
   const [services, setServices] = useState([]);
   const [message, setMessage] = useState("");
   const [logs, setLogs] = useState([]);
+  const [selectedService, setSelectedService] = useState("");
 
   // Fetch available services from Flask API
   const fetchServices = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5003/services");
+      const response = await axios.get("http://192.168.2.153:5003/services"); // Correct API endpoint
       console.log("Fetched Services:", response.data);
-      setServices(Object.entries(response.data.services)); // Convert object to array
+
+      // Convert object to array
+      setServices(Object.entries(response.data));
     } catch (error) {
       console.error("Error fetching services:", error);
+      setLogs((prevLogs) => [...prevLogs, "Failed to fetch services"]);
     }
   };
 
   useEffect(() => {
     fetchServices(); // Fetch services on load
-  
-    socket.on("update_services", (updatedServices) => {
-      setServices(Object.entries(updatedServices));
-    });
-  
-    socket.on("message_forwarded", (data) => {
-      console.log("WebSocket Received:", data);
-  
+
+    // WebSocket event listeners for real-time updates
+    socket.on("message_received", (data) => {
       setLogs((prevLogs) => [
         ...prevLogs,
-        `Sent: "${data.message}" from ${data.from} to ${data.to}`,
-        `LLM Response: ${JSON.stringify(data.response)}`,
+        `Received: "${data.message}" from ${data.from}`,
       ]);
     });
-  
-    return () => {
-      socket.off("update_services");
-      socket.off("message_forwarded");
-    };
-  }, []);
-  
 
-  const sendMessage = async () => {
-    if (!message || services.length < 2) {
-      setLogs((prevLogs) => [...prevLogs, "No services available or message is empty"]);
-      return;
-    }
-  
-    const [firstService, secondService] = services.map(([serviceId]) => serviceId);
-  
-    try {
-      const response = await axios.post("http://127.0.0.1:5003/forward", {
-        from_service: firstService,
-        to_service: secondService,
-        message: message,
-      });
-  
+    socket.on("message_forwarded", (data) => {
       setLogs((prevLogs) => [
         ...prevLogs,
-        `Sent: "${message}" from ${firstService} to ${secondService}`,
+        `Forwarded: "${data.message}" from ${data.from} to ${data.to}`,
+      ]);
+    });
+
+    socket.on("message_sent", (data) => {
+      setLogs((prevLogs) => [
+        ...prevLogs,
+        `Sent: "${data.message}" to ${data.to}`,
+      ]);
+    });
+
+    return () => {
+      socket.off("message_received");
+      socket.off("message_forwarded");
+      socket.off("message_sent");
+    };
+  }, []);
+
+  const sendMessage = async () => {
+    if (!message) {
+      setLogs((prevLogs) => [...prevLogs, "Write something first!"]);
+      return;
+    }
+    if (!selectedService) {
+      setLogs((prevLogs) => [...prevLogs, "No service selected!"]);
+      return;
+    }
+
+    try {
+      console.log(`Sending to: ${selectedService}`);
+      const response = await axios.post("http://192.168.2.117:5001/send-message", {
+        to_service: selectedService,
+        message: message,
+      });
+
+      setLogs((prevLogs) => [
+        ...prevLogs,
+        `Sent: "${message}" to ${selectedService}`,
         `Response: ${JSON.stringify(response.data)}`,
       ]);
     } catch (error) {
@@ -76,36 +91,6 @@ function App() {
       ]);
     }
   };
-  
-  
-
-  const sendMessageToAll = async () => {
-    if (!message) return;
-  
-    const requests = services.map(async ([serviceId]) => {
-      try {
-        const response = await axios.post("http://127.0.0.1:5003/forward", {
-          from_service: services[0][0],  // First service sends message
-          to_service: serviceId,
-          message: message,
-        });
-  
-        setLogs((prevLogs) => [
-          ...prevLogs,
-          `Sent: "${message}" to ${serviceId}`,
-          `LLM Response: ${JSON.stringify(response.data)}`,
-        ]);
-      } catch (error) {
-        setLogs((prevLogs) => [
-          ...prevLogs,
-          `Error sending to ${serviceId}: ${error.message}`,
-        ]);
-      }
-    });
-  
-    await Promise.all(requests);
-  };
-  
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
@@ -117,6 +102,7 @@ function App() {
           <thead>
             <tr>
               <th>Service ID</th>
+              <th>Service Name</th>
               <th>Host</th>
               <th>Port</th>
             </tr>
@@ -126,6 +112,7 @@ function App() {
               services.map(([serviceId, details]) => (
                 <tr key={serviceId}>
                   <td>{serviceId}</td>
+                  <td>{details.name}</td>
                   <td>{details.host}</td>
                   <td>{details.port}</td>
                 </tr>
@@ -146,8 +133,22 @@ function App() {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
-        <button onClick={sendMessageToAll} style={{ marginLeft: "10px" }}>
-          Send to All
+
+        <select
+          onChange={(e) => setSelectedService(e.target.value)}
+          value={selectedService}
+          style={{ marginLeft: "10px" }}
+        >
+          <option value="">Select Service</option>
+          {services.map(([serviceId, details]) => (
+            <option key={serviceId} value={serviceId}>
+              {details.name}
+            </option>
+          ))}
+        </select>
+
+        <button onClick={sendMessage} style={{ marginLeft: "10px" }}>
+          Send Message
         </button>
       </div>
 
